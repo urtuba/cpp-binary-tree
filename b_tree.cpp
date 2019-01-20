@@ -1,7 +1,3 @@
-/* @Author
-Student Name: Samed Kahyaoglu
-Student ID: 150160718
-Date: 24.12.2018 */
 //SHOULD BE COMPILED WITH -std=c++11 ARGUMENT
 
 #include <iostream>
