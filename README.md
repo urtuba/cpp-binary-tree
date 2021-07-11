@@ -1,12 +1,5 @@
-# Tea Programming Language
-Implementation <strong> a programming language </strong> named <strong>Tea</strong>. Exercise related to this topics:
-<ul>
-  <li><strong>Recursive Programming</strong></li>
-  <li><strong>C++ (as language)</strong></li>
-  <li><strong>Binary trees</strong></li>
-  <li><strong>Tree Implementation</strong></li>
-  <li><strong>Data Structures</strong></li>
-</ul>
+# Binary Tree Exercise
+It is data structures homework in Istanbul Technical University.
 
 ## Problem
 There is an input file first line indicates values of nodes of the tree to be created. They are always placed like the graph given below:
