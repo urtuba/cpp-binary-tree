@@ -32,6 +32,6 @@ Run on windows: ``b_tree input.txt``
 
 ## Notes
 
-Remember the first image, there was a series of data like 1, 2, 3, 4, 5... As you can realize, this numbers are ordered with positive integers. Even tree is initialized with different data like 19, 25, 30... there is a secret 1, 2, 3 order in order to their position in the tree. I used this to distinguish whether an node is left or right subtree.
+Remember the first image, there was a series of data like 1, 2, 3, 4, 5... As you can realize, this numbers are ordered with positive integers. Even tree is initialized with different data like 19, 25, 30... there is a secret 1, 2, 3 order in order to their position in the tree. I used this to distinguish whether a node is left or right subtree.
 
 Whenever ``ptr -> nodeNum < 3*pow(2, floor(log2(ptr->nodeNum)))/2`` goes true, you can assume you are in left subtree.
