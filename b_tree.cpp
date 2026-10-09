@@ -1,126 +1,140 @@
-//SHOULD BE COMPILED WITH -std=c++11 ARGUMENT
+// Author: Samed Kahyaoglu
+// Github: urtuba
+// Restored: 2026
 
-#include <iostream>
 #include <fstream>
-#include <string>
+#include <iostream>
 #include <sstream>
-#include <cstdlib>
-#include <cmath>
-using namespace std;
+#include <string>
 
-struct Node{
-  int data; // holds input value
-  int nodeNum; // holds order of node
-  Node* left;
-  Node* right;
+// One node of the tree. Nodes are numbered level by level, left to right,
+// starting with 1 at the root. Node k has the children 2k and 2k+1.
+struct Node {
+    int value;
+    int number;
+    Node* left;
+    Node* right;
 };
 
-struct Tree {
-  Node* root;
-  bool left; // true: left path found
-  bool right; // true: right path found
-  string leftPath; // text will be written for left path
-  string rightPath; // same for right
-  int nodeCount; // how many nodes in this tree.
-  int target; // value to reach
-  int dir[10]; // I use it to find position of a node
-  void create() {
-    root = NULL;
-    nodeCount = 0;
-    for (int i = 0; i < 10; i++) {
-      dir[i]=0;
-    }
-    target = 0;
-    left = false;
-    right = false;
-    leftPath = "No Path Found";
-    rightPath = "No Path Found";
-  } // initializer
-  Node* newnode(int data) {
-    Node* newNode = new Node;
-    newNode -> data = data;
-    newNode -> left = NULL;
-    newNode -> right = NULL;
-    newNode -> nodeNum = nodeCount + 1;
-    return newNode;
-  } // creates a node with given integer
-  void add_node(int data) { // calls newnode() and places it to required position
-    if (nodeCount == 0) {
-      root = newnode(data);
-      nodeCount++;
-      return;
-    }
-    if (nodeCount != 0) {
-      int x = nodeCount + 1;
-      int dirCount = 0; // stands for branch number to arrive target place
-      while (x != 1) { // this math algorithm gives me route
-          if (x % 2 == 0) {
-            x = x / 2;
-            dir[dirCount++] = 1; //stands for left
-          } else {
-            x = (x - 1) / 2;
-            dir[dirCount++] = 2; //stands for right
-          }
+// Which subtree of the root a path ends in.
+enum class Side { Left, Right };
+
+// The best path found for one side.
+struct Result {
+    bool found = false;
+    std::string text = "No Path Found";
+};
+
+// A complete binary tree that owns its nodes and frees them when destroyed.
+class Tree {
+public:
+    Tree() = default;
+    Tree(const Tree&) = delete;
+    Tree& operator=(const Tree&) = delete;
+    ~Tree() { free_nodes(root_); }
+
+    // Line 1 of the file holds the node values, line 2 holds the target.
+    void read_file(const char* file_name) {
+        std::ifstream input(file_name);
+        std::string line;
+        std::getline(input, line);
+        std::istringstream values(line);
+        int value;
+        while (values >> value) {
+            add_node(value);
         }
-        Node* node_ptr = root;
-        while (true) { // this loop goes over route which was founded
-          if (dirCount == 1) break;
-          if (dir[dirCount - 1] == 1) {
-            node_ptr = node_ptr -> left;
-            dirCount--;
-          } else {
-            node_ptr = node_ptr -> right;
-            dirCount--;
-          }
+        input >> target_;
+    }
+
+    // Search the whole tree and print the left path, then the right path.
+    void print_paths() {
+        if (root_ != nullptr) {
+            // The root belongs to neither subtree, but it is counted as left
+            // here. So a target equal to the root's value prints the root
+            // alone as the left path. This is a known bug.
+            search(root_, 0, "Path Found:", Side::Left);
         }
-        if (dir[0] == 1) { // last step on route
-          node_ptr -> left = newnode(data);
-          nodeCount++;
-          return;
+        std::cout << left_.text << '\n';
+        std::cout << right_.text << '\n';
+    }
+
+private:
+    Node* root_ = nullptr;
+    int count_ = 0;
+    int target_ = 0;
+    Result left_;
+    Result right_;
+
+    static void free_nodes(Node* node) {
+        if (node == nullptr) {
+            return;
+        }
+        free_nodes(node->left);
+        free_nodes(node->right);
+        delete node;
+    }
+
+    // Put the value in the first free place, so that the tree stays complete.
+    void add_node(int value) {
+        Node* node = new Node{value, count_ + 1, nullptr, nullptr};
+        if (root_ == nullptr) {
+            root_ = node;
+            count_++;
+            return;
+        }
+
+        // Walk from the new node's number up to the root. Each step tells
+        // whether the node is a left child (even) or a right child (odd).
+        // The steps are collected bottom-up, so the last one is next to the root.
+        int steps[10];
+        int step_count = 0;
+        for (int n = node->number; n != 1; n /= 2) {
+            steps[step_count++] = (n % 2 == 0) ? 1 : 2;
+        }
+
+        // Follow the steps from the root down to the parent.
+        Node* parent = root_;
+        for (int i = step_count - 1; i > 0; i--) {
+            parent = (steps[i] == 1) ? parent->left : parent->right;
+        }
+
+        if (steps[0] == 1) {
+            parent->left = node;
         } else {
-          node_ptr -> right = newnode(data);
-          nodeCount++;
-          return;
+            parent->right = node;
         }
-      }
+        count_++;
     }
-  void read_file(char** argv) {
-    ifstream inputFile(argv[1]);
-    string line;
-    getline(inputFile, line);
-    stringstream myLine(line); // i get values from first line
-    int a;
-    while(myLine >> a) add_node(a);
-    inputFile >> target; // value in the second line
-  }
-  void path_finder(int sum = 0, Node* ptr = NULL, string text = "Path Found:") {
-    if(ptr == NULL) ptr = root;
 
-    sum = sum + ptr -> data;
-    text = text + " " + to_string(ptr -> data);
-    if(target == sum)
-    {
-      if ((ptr -> nodeNum < 3*pow(2, floor(log2(ptr->nodeNum)))/2) && (left == false)) { // first condition of if is a math formula which recognizes which subtree (L/R) are we in.
-        left = true;
-          leftPath = text;
-      }
-      if (!(ptr->nodeNum < 3*pow(2, floor(log2(ptr->nodeNum)))/2) && (right == false)){
-        right = true;
-        rightPath = text;
-      }
+    // Preorder search. It carries the sum and the text of the path from the
+    // root to this node. The first path found for a side is kept.
+    void search(const Node* node, int sum, std::string text, Side side) {
+        sum += node->value;
+        text += " " + std::to_string(node->value);
+
+        if (sum == target_) {
+            Result& result = (side == Side::Left) ? left_ : right_;
+            if (!result.found) {
+                result.found = true;
+                result.text = text;
+            }
+        }
+
+        // The root's two children start the two sides. Below them, the side
+        // does not change.
+        bool is_root = (node == root_);
+        if (node->left != nullptr) {
+            search(node->left, sum, text, is_root ? Side::Left : side);
+        }
+        if (node->right != nullptr) {
+            search(node->right, sum, text, is_root ? Side::Right : side);
+        }
     }
-    if (ptr -> left != NULL) path_finder(sum, ptr->left, text);
-    if (ptr -> right != NULL) path_finder(sum, ptr-> right, text);
-    return;
-  }
 };
 
-int main(int argc, char *argv[]) {
-  Tree myt;
-  myt.create();
-  myt.read_file(argv);
-  myt.path_finder();
-  cout << myt.leftPath << endl;
-  cout << myt.rightPath << endl;
-  return 0;
+int main(int, char* argv[]) {
+    Tree tree;
+    tree.read_file(argv[1]);
+    tree.print_paths();
+    return 0;
 }
