@@ -51,13 +51,19 @@ public:
         input >> target_;
     }
 
-    // Search the whole tree and print the left path, then the right path.
+    // Search both subtrees of the root and print the left path, then the
+    // right path. A path has at least one node below the root, because the
+    // root alone is in neither subtree.
     void print_paths() {
         if (!nodes_.empty()) {
-            // The root belongs to neither subtree, but it is counted as left
-            // here. So a target equal to the root's value prints the root
-            // alone as the left path. This is a known bug.
-            search(nodes_[0], 0, "Path Found:", Side::Left);
+            const Node* root = nodes_[0];
+            std::string text = "Path Found: " + std::to_string(root->value);
+            if (root->left != nullptr) {
+                search(root->left, root->value, text, Side::Left);
+            }
+            if (root->right != nullptr) {
+                search(root->right, root->value, text, Side::Right);
+            }
         }
         std::cout << left_.text << '\n';
         std::cout << right_.text << '\n';
@@ -86,8 +92,8 @@ private:
         }
     }
 
-    // Preorder search. It carries the sum and the text of the path from the
-    // root to this node. The first path found for a side is kept.
+    // Preorder search of one subtree. It carries the sum and the text of the
+    // path from the root to this node. The first path found for a side is kept.
     void search(const Node* node, int sum, std::string text, Side side) {
         sum += node->value;
         text += " " + std::to_string(node->value);
@@ -100,14 +106,11 @@ private:
             }
         }
 
-        // The root's two children start the two sides. Below them, the side
-        // does not change.
-        bool is_root = (node->number == 1);
         if (node->left != nullptr) {
-            search(node->left, sum, text, is_root ? Side::Left : side);
+            search(node->left, sum, text, side);
         }
         if (node->right != nullptr) {
-            search(node->right, sum, text, is_root ? Side::Right : side);
+            search(node->right, sum, text, side);
         }
     }
 };
