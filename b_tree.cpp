@@ -225,24 +225,33 @@ private:
     }
 };
 
-int main(int argc, char* argv[]) {
-    if (argc != 2) {
-        std::cerr << "usage: b_tree INPUT_FILE\n";
-        return 2;
-    }
-    std::ifstream file(argv[1]);
-    if (!file) {
-        std::cerr << "error: cannot open " << argv[1] << '\n';
-        return 1;
-    }
-
+// Reads the tree from the stream and prints the two paths.
+// Returns the exit status.
+int run(std::istream& input) {
     try {
         Tree tree;
-        tree.read(file);
+        tree.read(input);
         tree.print_paths();
     } catch (const InputError& e) {
         std::cerr << "error: " << e.what() << '\n';
         return 1;
     }
     return 0;
+}
+
+int main(int argc, char* argv[]) {
+    if (argc > 2) {
+        std::cerr << "usage: b_tree [INPUT_FILE]\n";
+        return 2;
+    }
+    if (argc == 1) {
+        return run(std::cin);
+    }
+
+    std::ifstream file(argv[1]);
+    if (!file) {
+        std::cerr << "error: cannot open " << argv[1] << '\n';
+        return 1;
+    }
+    return run(file);
 }

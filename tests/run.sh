@@ -3,7 +3,10 @@
 # The program gets NAME.txt as its only argument, unless the file NAME.args
 # exists: then its words are the arguments instead (the .txt file is
 # ignored). An empty NAME.args means no arguments. NAME.txt is always
-# the standard input of the program.
+# the standard input of the program, so with no arguments the program
+# reads the tree from stdin.
+# A valid case (no NAME.args, exit status 0) is run a second time with no
+# arguments and the input on stdin, and must give the same result.
 # The program runs inside tests/cases, so paths in .args and in error
 # messages are relative to that directory.
 # Compares stdout with NAME.out, the exit status with NAME.code (default 0)
@@ -67,6 +70,9 @@ for input in *.txt; do
         run_case "$name" "$name" "$@"
     else
         run_case "$name" "$name" "$input"
+        if [ "$expected_code" -eq 0 ]; then
+            run_case "$name (stdin)" "$name"
+        fi
     fi
 done
 

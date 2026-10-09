@@ -1,1 +1,1 @@
-usage: b_tree INPUT_FILE
+usage: b_tree [INPUT_FILE]
