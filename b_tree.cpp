@@ -6,6 +6,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <vector>
 
 // One node of the tree. Nodes are numbered level by level, left to right,
 // starting with 1 at the root. Node k has the children 2k and 2k+1.
@@ -31,7 +32,11 @@ public:
     Tree() = default;
     Tree(const Tree&) = delete;
     Tree& operator=(const Tree&) = delete;
-    ~Tree() { free_nodes(root_); }
+    ~Tree() {
+        for (Node* node : nodes_) {
+            delete node;
+        }
+    }
 
     // Line 1 of the file holds the node values, line 2 holds the target.
     void read_file(const char* file_name) {
@@ -48,62 +53,37 @@ public:
 
     // Search the whole tree and print the left path, then the right path.
     void print_paths() {
-        if (root_ != nullptr) {
+        if (!nodes_.empty()) {
             // The root belongs to neither subtree, but it is counted as left
             // here. So a target equal to the root's value prints the root
             // alone as the left path. This is a known bug.
-            search(root_, 0, "Path Found:", Side::Left);
+            search(nodes_[0], 0, "Path Found:", Side::Left);
         }
         std::cout << left_.text << '\n';
         std::cout << right_.text << '\n';
     }
 
 private:
-    Node* root_ = nullptr;
-    int count_ = 0;
+    // nodes_[k - 1] is node number k, so the parent of node k is node k / 2.
+    std::vector<Node*> nodes_;
     int target_ = 0;
     Result left_;
     Result right_;
 
-    static void free_nodes(Node* node) {
-        if (node == nullptr) {
-            return;
-        }
-        free_nodes(node->left);
-        free_nodes(node->right);
-        delete node;
-    }
-
     // Put the value in the first free place, so that the tree stays complete.
     void add_node(int value) {
-        Node* node = new Node{value, count_ + 1, nullptr, nullptr};
-        if (root_ == nullptr) {
-            root_ = node;
-            count_++;
+        int number = static_cast<int>(nodes_.size()) + 1;
+        Node* node = new Node{value, number, nullptr, nullptr};
+        nodes_.push_back(node);
+        if (number == 1) {
             return;
         }
-
-        // Walk from the new node's number up to the root. Each step tells
-        // whether the node is a left child (even) or a right child (odd).
-        // The steps are collected bottom-up, so the last one is next to the root.
-        int steps[10];
-        int step_count = 0;
-        for (int n = node->number; n != 1; n /= 2) {
-            steps[step_count++] = (n % 2 == 0) ? 1 : 2;
-        }
-
-        // Follow the steps from the root down to the parent.
-        Node* parent = root_;
-        for (int i = step_count - 1; i > 0; i--) {
-            parent = (steps[i] == 1) ? parent->left : parent->right;
-        }
-
-        if (steps[0] == 1) {
+        Node* parent = nodes_[number / 2 - 1];
+        if (number % 2 == 0) {
             parent->left = node;
         } else {
             parent->right = node;
         }
-        count_++;
     }
 
     // Preorder search. It carries the sum and the text of the path from the
@@ -122,7 +102,7 @@ private:
 
         // The root's two children start the two sides. Below them, the side
         // does not change.
-        bool is_root = (node == root_);
+        bool is_root = (node->number == 1);
         if (node->left != nullptr) {
             search(node->left, sum, text, is_root ? Side::Left : side);
         }
